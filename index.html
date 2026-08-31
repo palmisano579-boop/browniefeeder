@@ -656,6 +656,23 @@
             statusLabel.innerText = "❌ Error de conexión: " + error.message;
         }
     };
+    // Escuchar la última comida para actualizar el título
+    const refHistorial = ref(db, 'comedero/historial');
+    onValue(refHistorial, (snapshot) => {
+        const data = snapshot.val();
+        const tituloEstado = document.getElementById("texto-ultima-comida");
+        
+        if (tituloEstado) {
+            if (data && data.ultimo_evento) {
+                // Si Firebase tiene los datos, los inyecta
+                let detalle = data.detalle ? data.detalle : "";
+                tituloEstado.innerText = `${data.ultimo_evento} \n(${detalle})`;
+            } else {
+                // Si la carpeta existe pero está vacía
+                tituloEstado.innerText = "Sin registros recientes";
+            }
+        }
+    });
 </script>
 </body>
 </html>
