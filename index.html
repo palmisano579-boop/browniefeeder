@@ -1,49 +1,150 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Comedero Inteligente</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Importamos Firebase desde la nube -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-      import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-      // ACA PONÉS TUS DATOS DE FIREBASE
-      const firebaseConfig = {
-        apiKey: "TU_API_KEY_ACA",
-        databaseURL: "https://TU-PROYECTO.firebaseio.com",
-        projectId: "TU-PROYECTO"
-      };
-
-      // Inicializamos Firebase
-      const app = initializeApp(firebaseConfig);
-      const db = getDatabase(app);
-
-      // Función que se ejecuta al apretar el botón
-      window.servirComida = function() {
-        const boton = document.getElementById("btn-servir");
-        boton.innerText = "Sirviendo...";
-        boton.disabled = true;
-
-        // Le mandamos la orden a la base de datos!
-        set(ref(db, 'estado/servir_comida'), true)
-          .then(() => {
-            alert("¡Orden enviada a casa!");
-            setTimeout(() => {
-                boton.innerText = "Dar de comer ahora";
-                boton.disabled = false;
-            }, 5000); // Rehabilitamos el botón a los 5 segundos
-          });
-      };
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BrownieFeeder</title>
+    
+    <!-- Fuente moderna de Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        body { text-align: center; font-family: Arial; padding: 50px; background-color: #f4f4f9;}
-        button { padding: 20px 40px; font-size: 20px; background-color: #4CAF50; color: white; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2);}
-        button:disabled { background-color: #ccc; }
+        /* Reseteo y estilos base */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; }
+        
+        body { 
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+        }
+
+        /* La "App" en sí */
+        .app-container {
+            background-color: white;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 30px;
+            padding: 40px 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        /* Foto del perro */
+        .foto-perfil {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #ff9f43;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(255, 159, 67, 0.3);
+        }
+
+        h1 { color: #2d3436; font-size: 28px; margin-bottom: 5px; font-weight: 900;}
+        p.subtitulo { color: #636e72; font-size: 16px; margin-bottom: 40px; }
+
+        /* El súper botón */
+        .btn-principal {
+            background: #ff9f43;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 20px;
+            font-size: 22px;
+            font-weight: 700;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 20px rgba(255, 159, 67, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-principal:active { transform: scale(0.95); box-shadow: 0 5px 10px rgba(255, 159, 67, 0.4); }
+        
+        .btn-principal.cargando {
+            background: #feca57;
+            cursor: not-allowed;
+            transform: scale(1);
+            box-shadow: none;
+        }
+
+        /* Texto de estado abajo */
+        .estado-texto {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #b2bec3;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
-    <h1>🐶 Comedero de Firulais</h1>
-    <button id="btn-servir" onclick="servirComida()">Dar de comer ahora</button>
+
+    <div class="app-container">
+        <!-- Podés cambiar la URL de esta imagen por una de tu perro! -->
+        <img src="https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=400&auto=format&fit=crop" alt="Brownie" class="foto-perfil">
+        
+        <h1>BrownieFeeder</h1>
+        <p class="subtitulo">Control de alimentación IoT</p>
+
+        <button id="btn-servir" class="btn-principal" onclick="servirComida()">
+            🍖 Dar de comer
+        </button>
+
+        <p class="estado-texto" id="texto-ultima-vez">Última ración: Todavía no sirvió hoy</p>
+    </div>
+
+    <!-- Scripts de Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // ⚠️ PEGAR TUS DATOS DE FIREBASE ACA ⚠️
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY_ACA",
+            databaseURL: "https://TU-PROYECTO.firebaseio.com",
+            projectId: "TU-PROYECTO"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Exponer la función al botón HTML
+        window.servirComida = function() {
+            const boton = document.getElementById("btn-servir");
+            const textoEstado = document.getElementById("texto-ultima-vez");
+            
+            // Cambiar aspecto del botón
+            boton.classList.add("cargando");
+            boton.innerHTML = "⏳ Sirviendo ración...";
+            boton.disabled = true;
+
+            // Enviar orden a Firebase
+            set(ref(db, 'estado/servir_comida'), true)
+                .then(() => {
+                    // Actualizar la hora en la pantalla
+                    const ahora = new Date();
+                    const horaFormateada = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    // Simular el tiempo que tarda el motor (ej. 5 segundos)
+                    setTimeout(() => {
+                        boton.classList.remove("cargando");
+                        boton.innerHTML = "🍖 Dar de comer";
+                        boton.disabled = false;
+                        textoEstado.innerHTML = "Última ración: Hoy a las " + horaFormateada;
+                    }, 5000); 
+                })
+                .catch((error) => {
+                    alert("Error de conexión: " + error);
+                    boton.classList.remove("cargando");
+                    boton.innerHTML = "🍖 Intentar de nuevo";
+                    boton.disabled = false;
+                });
+        };
+    </script>
 </body>
 </html>
