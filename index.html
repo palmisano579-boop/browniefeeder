@@ -321,20 +321,29 @@
                 </div>
             </div>
 
-            <!-- TARJETA WI-FI BLUETOOTH -->
+            <!-- TARJETA WI-FI BLUETOOTH (PREMIUM) -->
             <div class="tarjeta tarjeta-columna" style="margin-top: 20px;">
                 <h4 style="font-size: 16px; color: var(--primary);">📡 Conectar al Wi-Fi de casa</h4>
-                <p style="font-size: 13px; color: var(--text-gray);">Solo necesario la primera vez o si cambiás de router.</p>
+                <p style="font-size: 13px; color: var(--text-gray);">Buscá las redes cercanas y guardá la contraseña en el comedero.</p>
                 
-                <input type="text" id="wifi-ssid" placeholder="Nombre de tu red (Wi-Fi)" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #EFEBE1;">
-                <input type="password" id="wifi-pass" placeholder="Contraseña del Wi-Fi" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #EFEBE1;">
-                
-                <button onclick="enviarWiFiBluetooth()" style="width: 100%; background: #3498db; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;">
-                    <i>🛜</i> Enviar al Comedero
+                <button id="btn-escanear-wifi" onclick="escanearWiFiBluetooth()" style="width: 100%; background: var(--primary-light); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                    <i>🔍</i> Buscar redes Wi-Fi
                 </button>
-                <div id="bt-status" style="font-size: 12px; font-weight: 800; color: var(--text-gray); margin-top: 5px; text-align: center; width: 100%;"></div>
+
+                <!-- Este panel arranca oculto hasta que el ESP32 mande las redes -->
+                <div id="panel-wifi-redes" style="display: none; width: 100%; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    <select id="wifi-ssid-select" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #EFEBE1; color: var(--primary); font-weight: 700;">
+                        <option value="">Seleccioná tu red...</option>
+                    </select>
+                    <input type="password" id="wifi-pass" placeholder="Contraseña del Wi-Fi" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #EFEBE1;">
+                    
+                    <button onclick="enviarWiFiBluetooth()" style="width: 100%; background: #3498db; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <i>🛜</i> Guardar en el Comedero
+                    </button>
+                </div>
+                
+                <div id="bt-status" style="font-size: 12px; font-weight: 800; color: var(--text-gray); margin-top: 10px; text-align: center; width: 100%;"></div>
             </div>
-        </div>
 
     <!-- NAVEGACIÓN INFERIOR -->
     <nav>
@@ -527,58 +536,111 @@
             }, 4000);
         }
     };
-    // ==========================================
-    // 3. LÓGICA BLUETOOTH (CONFIGURACIÓN WI-FI)
+   // ==========================================
+    // 3. LÓGICA BLUETOOTH PREMIUM (ESCANEO Y WI-FI)
     // ==========================================
     
-    window.enviarWiFiBluetooth = async function() {
-        const ssid = document.getElementById('wifi-ssid').value.trim();
-        const pass = document.getElementById('wifi-pass').value.trim();
+    let bleDevice;
+    let bleTxCharacteristic; // Para mandarle órdenes al ESP32
+    let bleRxCharacteristic; // Para recibir la lista de redes del ESP32
+    let redesEncontradas = "";
+
+    window.escanearWiFiBluetooth = async function() {
         const statusLabel = document.getElementById('bt-status');
-
-        if (!ssid) {
-            statusLabel.style.color = "var(--danger)";
-            statusLabel.innerText = "⚠️ Escribí el nombre del Wi-Fi";
-            return;
-        }
-
+        const panelRedes = document.getElementById('panel-wifi-redes');
+        const selectSsid = document.getElementById('wifi-ssid-select');
+        
         try {
             statusLabel.style.color = "var(--text-gray)";
-            statusLabel.innerText = "Buscando comedero...";
+            statusLabel.innerText = "Buscando comedero por Bluetooth...";
             
-            // 1. Pedir permiso para buscar el ESP32 por Bluetooth
-            const device = await navigator.bluetooth.requestDevice({
+            // 1. Pedir permiso al usuario
+            bleDevice = await navigator.bluetooth.requestDevice({
                 filters: [{ name: 'Brownie-ESP32' }],
-                optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1214'] // Código de servicio único
+                optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1214']
             });
 
             statusLabel.innerText = "Conectando...";
-            const server = await device.gatt.connect();
+            const server = await bleDevice.gatt.connect();
             const service = await server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1214');
-            const characteristic = await service.getCharacteristic('19b10001-e8f2-537e-4f6c-d104768a1214');
-
-            statusLabel.innerText = "Enviando contraseña...";
             
-            // 2. Armar el paquete de datos y enviarlo
-            const payload = ssid + "||" + pass;
+            // Obtenemos los dos canales de comunicación
+            bleTxCharacteristic = await service.getCharacteristic('19b10001-e8f2-537e-4f6c-d104768a1214');
+            bleRxCharacteristic = await service.getCharacteristic('19b10002-e8f2-537e-4f6c-d104768a1214');
+
+            // 2. Prepararnos para escuchar las respuestas del ESP32
+            await bleRxCharacteristic.startNotifications();
+            bleRxCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+                const decodificador = new TextDecoder('utf-8');
+                const valor = decodificador.decode(event.target.value);
+                
+                if(valor === "FIN_SCAN") {
+                    // Terminó de mandar, armamos el select
+                    const redes = redesEncontradas.split(",").filter(r => r !== "");
+                    
+                    selectSsid.innerHTML = '<option value="">Seleccioná tu red...</option>';
+                    redes.forEach(red => {
+                        const option = document.createElement("option");
+                        option.value = red;
+                        option.text = red;
+                        selectSsid.appendChild(option);
+                    });
+                    
+                    statusLabel.innerText = "✅ Redes encontradas";
+                    panelRedes.style.display = "flex";
+                } else {
+                    // Sigue mandando pedacitos de la lista, los acumulamos
+                    redesEncontradas += valor;
+                }
+            });
+
+            // 3. Darle la orden de escanear al ESP32
+            statusLabel.innerText = "Escaneando Wi-Fi (puede demorar 5 segundos)...";
+            redesEncontradas = ""; 
+            
             const encoder = new TextEncoder();
-            await characteristic.writeValue(encoder.encode(payload));
-
-            // 3. Éxito
-            statusLabel.style.color = "var(--success)";
-            statusLabel.innerText = "✅ ¡Guardado! El comedero se está reiniciando.";
-            
-            // Desconectar Bluetooth para liberar la antena
-            device.gatt.disconnect();
-            
-            // Limpiar los campos por seguridad
-            document.getElementById('wifi-ssid').value = "";
-            document.getElementById('wifi-pass').value = "";
+            await bleTxCharacteristic.writeValue(encoder.encode("SCAN"));
 
         } catch (error) {
             console.error(error);
             statusLabel.style.color = "var(--danger)";
             statusLabel.innerText = "❌ Error: " + error.message;
+        }
+    };
+
+    window.enviarWiFiBluetooth = async function() {
+        const ssid = document.getElementById('wifi-ssid-select').value;
+        const pass = document.getElementById('wifi-pass').value.trim();
+        const statusLabel = document.getElementById('bt-status');
+
+        if (!ssid) {
+            statusLabel.style.color = "var(--danger)";
+            statusLabel.innerText = "⚠️ Seleccioná una red Wi-Fi de la lista";
+            return;
+        }
+
+        try {
+            statusLabel.style.color = "var(--text-gray)";
+            statusLabel.innerText = "Enviando credenciales al comedero...";
+            
+            const payload = ssid + "||" + pass;
+            const encoder = new TextEncoder();
+            await bleTxCharacteristic.writeValue(encoder.encode(payload));
+
+            statusLabel.style.color = "var(--success)";
+            statusLabel.innerText = "✅ ¡Guardado! El comedero se está reiniciando.";
+            
+            // Limpiar y apagar Bluetooth
+            document.getElementById('wifi-pass').value = "";
+            document.getElementById('panel-wifi-redes').style.display = "none";
+            if (bleDevice && bleDevice.gatt.connected) {
+                bleDevice.gatt.disconnect();
+            }
+
+        } catch (error) {
+            console.error(error);
+            statusLabel.style.color = "var(--danger)";
+            statusLabel.innerText = "❌ Error de conexión: " + error.message;
         }
     };
 </script>
