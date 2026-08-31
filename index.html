@@ -375,7 +375,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, push, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     // Tu configuración exacta de Firebase
     const firebaseConfig = {
@@ -389,7 +389,7 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const db = Database(app);
 
     // ==========================================
     // 1. LÓGICA VISUAL (PESTAÑAS Y MODALES)
@@ -426,7 +426,7 @@
 
     // === GESTIÓN DE RUTINAS ===
     
-    window.guardarHorario = function() {
+    window.guardarHorario = async function() {
         const hora = document.getElementById("nuevo-horario-hora").value;
         const porcionSel = document.getElementById("nuevo-horario-porcion");
         const porcionValor = porcionSel.value;
@@ -444,8 +444,23 @@
             return;
         }
 
-        // Subir a Firebase
+        // --- NUEVA VALIDACIÓN: HORA REPETIDA ---
         const rutinasRef = ref(db, 'comedero/rutinas');
+        const snapshot = await get(rutinasRef);
+        
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            // Revisamos si alguna rutina ya tiene esa misma hora
+            const horaDuplicada = Object.values(data).some(rutina => rutina.hora === hora);
+            
+            if (horaDuplicada) {
+                alert(`⚠️ Ya tenés una rutina programada a las ${hora} hs. Elegí otro horario.`);
+                return; // Corta la función y no guarda nada
+            }
+        }
+        // ---------------------------------------
+
+        // Si pasó la validación, subimos a Firebase
         push(rutinasRef, {
             hora: hora,
             porcion_valor: parseFloat(porcionValor),
