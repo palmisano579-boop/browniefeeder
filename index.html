@@ -320,8 +320,21 @@
                     ✅ ¡Calibración guardada exitosamente!
                 </div>
             </div>
+
+            <!-- TARJETA WI-FI BLUETOOTH -->
+            <div class="tarjeta tarjeta-columna" style="margin-top: 20px;">
+                <h4 style="font-size: 16px; color: var(--primary);">📡 Conectar al Wi-Fi de casa</h4>
+                <p style="font-size: 13px; color: var(--text-gray);">Solo necesario la primera vez o si cambiás de router.</p>
+                
+                <input type="text" id="wifi-ssid" placeholder="Nombre de tu red (Wi-Fi)" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #EFEBE1;">
+                <input type="password" id="wifi-pass" placeholder="Contraseña del Wi-Fi" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #EFEBE1;">
+                
+                <button onclick="enviarWiFiBluetooth()" style="width: 100%; background: #3498db; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                    <i>🛜</i> Enviar al Comedero
+                </button>
+                <div id="bt-status" style="font-size: 12px; font-weight: 800; color: var(--text-gray); margin-top: 5px; text-align: center; width: 100%;"></div>
+            </div>
         </div>
-    </div>
 
     <!-- NAVEGACIÓN INFERIOR -->
     <nav>
