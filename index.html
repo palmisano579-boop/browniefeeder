@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
-        /* --- PALETA DE COLORES (Tonos Marrones/Café) --- */
+        /* --- PALETA DE COLORES --- */
         :root {
             --bg-color: #F7F3EB;       
             --primary: #6D4C41;        
@@ -37,6 +37,7 @@
             position: relative;
             background-color: var(--bg-color);
             box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            overflow: hidden;
         }
 
         /* --- HEADER --- */
@@ -74,14 +75,50 @@
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- PESTAÑA 1: INICIO --- */
+        /* --- ESTILOS COMPARTIDOS (Tarjetas) --- */
         .tarjeta-estado {
             background: var(--card-bg); border-radius: 20px; padding: 20px; text-align: center;
             box-shadow: 0 5px 15px rgba(109, 76, 65, 0.05); margin-bottom: 25px;
         }
         .tarjeta-estado h3 { color: var(--text-gray); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;}
         .tarjeta-estado h2 { font-size: 20px; color: var(--primary); margin-top: 5px; }
+        .tarjeta {
+            background: var(--card-bg); border-radius: 20px; padding: 20px;
+            box-shadow: 0 5px 15px rgba(109, 76, 65, 0.05); margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .tarjeta-columna { flex-direction: column; align-items: flex-start; gap: 15px;}
+        .titulo-seccion { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 15px; }
 
+        /* --- BOTÓN PRINCIPAL Y SUS ESTADOS --- */
+        .btn-principal {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 25px; font-size: 22px; font-weight: 900; border-radius: 25px;
+            cursor: pointer; transition: all 0.3s ease; box-shadow: 0 10px 20px rgba(109, 76, 65, 0.3);
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        .btn-principal:active { transform: scale(0.96); }
+        
+        .btn-cargando {
+            background-color: #BCAAA4 !important;
+            box-shadow: none !important;
+            cursor: not-allowed;
+            transform: scale(1) !important;
+        }
+        .btn-exito {
+            background-color: var(--success) !important;
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3) !important;
+        }
+        
+        /* Animación del Spinner */
+        .spinner {
+            display: inline-block; width: 22px; height: 22px;
+            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top-color: white; animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- SELECTOR DE PORCIÓN --- */
         .selector-porcion {
             display: flex; justify-content: space-between; background: #EFEBE1;
             border-radius: 15px; padding: 5px; margin-bottom: 20px;
@@ -93,22 +130,7 @@
         }
         .selector-porcion div.active { background: var(--card-bg); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
-        .btn-principal {
-            width: 100%; background: var(--primary); color: white; border: none;
-            padding: 25px; font-size: 22px; font-weight: 900; border-radius: 25px;
-            cursor: pointer; transition: all 0.2s ease; box-shadow: 0 10px 20px rgba(109, 76, 65, 0.3);
-        }
-        .btn-principal:active { transform: scale(0.96); }
-
-        /* --- ELEMENTOS GLOBALES --- */
-        .tarjeta {
-            background: var(--card-bg); border-radius: 20px; padding: 20px;
-            box-shadow: 0 5px 15px rgba(109, 76, 65, 0.05); margin-bottom: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .tarjeta-columna { flex-direction: column; align-items: flex-start; gap: 15px;}
-        .titulo-seccion { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 15px; }
-
+        /* --- SWITCHES Y FORMULARIOS --- */
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
@@ -121,9 +143,35 @@
             font-size: 16px; font-weight: 700; color: var(--primary); outline: none; background: #FDFBF7;
         }
 
+        /* --- MODAL / BOTTOM SHEET (NUEVO) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(62, 39, 35, 0.7);
+            z-index: 999; display: none; opacity: 0; transition: opacity 0.3s;
+        }
+        .modal-overlay.active { display: block; opacity: 1; }
+        
+        .bottom-sheet {
+            position: fixed; bottom: -100%; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 450px; background: var(--card-bg);
+            border-top-left-radius: 30px; border-top-right-radius: 30px;
+            padding: 30px 25px 25px; z-index: 1000;
+            transition: bottom 0.3s ease-out; box-shadow: 0 -10px 20px rgba(0,0,0,0.1);
+        }
+        .bottom-sheet.active { bottom: 0; }
+        
+        .dias-semana { display: flex; justify-content: space-between; margin: 15px 0 25px; }
+        .dia-burbuja {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: #EFEBE1; color: var(--text-gray);
+            font-size: 14px; font-weight: 800; cursor: pointer; transition: 0.2s;
+        }
+        .dia-burbuja.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(109, 76, 65, 0.3); }
+
         /* --- NAVEGACIÓN INFERIOR --- */
         nav {
-            position: fixed; bottom: 0; width: 100%; max-width: 450px;
+            position: absolute; bottom: 0; width: 100%;
             background: var(--card-bg); display: flex; justify-content: space-around;
             padding: 15px 10px 25px; border-top-left-radius: 25px; border-top-right-radius: 25px;
             box-shadow: 0 -5px 20px rgba(109, 76, 65, 0.08); z-index: 100;
@@ -142,16 +190,12 @@
         .historial-hora { font-weight: 800; color: var(--primary); }
         .historial-detalle { font-size: 13px; color: var(--text-gray); }
 
-        /* Animación de pulso para botón grabando */
         @keyframes pulsoGrabar {
             0% { box-shadow: 0 0 0 0 rgba(255, 118, 117, 0.7); }
             70% { box-shadow: 0 0 0 15px rgba(255, 118, 117, 0); }
             100% { box-shadow: 0 0 0 0 rgba(255, 118, 117, 0); }
         }
-        .btn-grabando {
-            background-color: var(--danger) !important;
-            animation: pulsoGrabar 1.5s infinite;
-        }
+        .btn-grabando { background-color: var(--danger) !important; animation: pulsoGrabar 1.5s infinite; }
 
     </style>
 </head>
@@ -180,20 +224,23 @@
         <div id="tab-home" class="tab-content active">
             <div class="tarjeta-estado">
                 <h3>Última comida servida</h3>
-                <h2>Hoy, 14:30 hs (Automático)</h2>
+                <h2 id="texto-ultima-comida">Hoy, 14:30 hs (Automático)</h2>
             </div>
+            
             <h3 class="titulo-seccion">Servir ahora</h3>
+            
             <div class="selector-porcion">
                 <div class="opcion-porcion" onclick="seleccionarPorcion(this)">Snack</div>
                 <div class="opcion-porcion active" onclick="seleccionarPorcion(this)">1 Porción</div>
                 <div class="opcion-porcion" onclick="seleccionarPorcion(this)">2 Porciones</div>
             </div>
-            <button class="btn-principal" onclick="alert('Simulación: Sirviendo comida a Brownie!')">
-                🍖 Dar de comer
+            
+            <button id="btn-servir-manual" class="btn-principal" onclick="simularServir()">
+                <span>🍖</span> Dar de comer
             </button>
         </div>
 
-      <!-- PESTAÑA 2: HORARIOS -->
+        <!-- PESTAÑA 2: HORARIOS -->
         <div id="tab-schedule" class="tab-content">
             <div class="tarjeta">
                 <div>
@@ -204,7 +251,6 @@
             </div>
             <h3 class="titulo-seccion">Configurar Rutinas</h3>
             
-            <!-- Desayuno -->
             <div class="tarjeta tarjeta-columna">
                 <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                     <h4 style="font-size: 16px; color: var(--primary);">☀️ Desayuno</h4>
@@ -219,8 +265,7 @@
                     </select>
                 </div>
             </div>
-
-            <!-- Cena -->
+            
             <div class="tarjeta tarjeta-columna">
                 <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                     <h4 style="font-size: 16px; color: var(--primary);">🌙 Cena</h4>
@@ -236,8 +281,7 @@
                 </div>
             </div>
 
-            <!-- Botón Agregar Horario -->
-            <button style="width: 100%; padding: 15px; border-radius: 15px; border: 2px dashed var(--primary-light); background: transparent; color: var(--primary); font-weight: 800; cursor: pointer; margin-top: 10px;">
+            <button onclick="abrirModal()" style="width: 100%; padding: 15px; border-radius: 15px; border: 2px dashed var(--primary-light); background: transparent; color: var(--primary); font-weight: 800; cursor: pointer; margin-top: 10px;">
                 + Agregar otro horario
             </button>
         </div>
@@ -265,37 +309,22 @@
             </div>
         </div>
 
-        <!-- PESTAÑA 4: AJUSTES (ACTUALIZADA) -->
+        <!-- PESTAÑA 4: AJUSTES -->
         <div id="tab-settings" class="tab-content">
             <h3 class="titulo-seccion">Calibración Inteligente</h3>
-            
-            <!-- TARJETA NUEVA DE CALIBRACIÓN -->
             <div class="tarjeta tarjeta-columna">
                 <p style="font-size: 14px; color: var(--text-gray); line-height: 1.4;">
                     1. Presioná <strong>Iniciar</strong> (el motor empezará a servir despacio).<br>
-                    2. Cuando la ración sea ideal para Brownie, presioná <strong>Detener</strong>.<br>
-                    El sistema guardará automáticamente la configuración.
+                    2. Cuando la ración sea ideal, presioná <strong>Detener</strong>.
                 </p>
-                
                 <button id="btn-calibrar" onclick="toggleCalibracion()" style="width: 100%; background: var(--primary-light); color: white; border: none; padding: 18px; border-radius: 15px; font-size: 16px; font-weight: 800; cursor: pointer; transition: all 0.3s ease;">
                     ▶️ Iniciar Calibración
                 </button>
-                
-                <!-- Mensaje de éxito oculto por defecto -->
                 <div id="mensaje-calibracion" style="display: none; width: 100%; text-align: center; color: var(--success); font-weight: 800; font-size: 14px; margin-top: 5px;">
                     ✅ ¡Calibración guardada exitosamente!
                 </div>
             </div>
-            
-            <div class="tarjeta tarjeta-columna" style="margin-top: 20px;">
-                <h4 style="font-size: 16px; color: var(--danger);">Zona Peligrosa</h4>
-                <p style="font-size: 12px; color: var(--text-gray);">Fuerza el reinicio del comedero si pierde conexión WiFi.</p>
-                <button style="width: 100%; background: var(--danger); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer;">
-                    🔄 Reiniciar ESP32
-                </button>
-            </div>
         </div>
-
     </div>
 
     <!-- NAVEGACIÓN INFERIOR -->
@@ -314,64 +343,131 @@
         </div>
     </nav>
 
+    <!-- MODAL "AGREGAR HORARIO" -->
+    <div id="modal-overlay" class="modal-overlay" onclick="cerrarModal()"></div>
+    <div id="bottom-sheet" class="bottom-sheet">
+        <h3 class="titulo-seccion" style="margin-bottom: 20px;">Nuevo Horario</h3>
+        
+        <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 20px;">
+            <input type="time" value="12:00" style="flex: 1;">
+            <select style="flex: 1;">
+                <option value="0.5">Snack</option>
+                <option value="1" selected>1 Porción</option>
+                <option value="2">2 Porciones</option>
+            </select>
+        </div>
+        
+        <h4 style="font-size: 14px; color: var(--primary-light); margin-bottom: 5px;">Repetir los días:</h4>
+        <div class="dias-semana">
+            <div class="dia-burbuja active" onclick="this.classList.toggle('active')">L</div>
+            <div class="dia-burbuja active" onclick="this.classList.toggle('active')">M</div>
+            <div class="dia-burbuja active" onclick="this.classList.toggle('active')">M</div>
+            <div class="dia-burbuja active" onclick="this.classList.toggle('active')">J</div>
+            <div class="dia-burbuja active" onclick="this.classList.toggle('active')">V</div>
+            <div class="dia-burbuja" onclick="this.classList.toggle('active')">S</div>
+            <div class="dia-burbuja" onclick="this.classList.toggle('active')">D</div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button onclick="cerrarModal()" style="flex:1; padding: 15px; border-radius:15px; border:none; background:#EFEBE1; color:var(--text-gray); font-weight:800; cursor:pointer;">Cancelar</button>
+            <button onclick="guardarHorario()" style="flex:1; padding: 15px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; cursor:pointer;">Guardar</button>
+        </div>
+    </div>
+
 </div>
 
 <script>
     // --- LÓGICA DE PESTAÑAS ---
     function cambiarPestana(tabId, elemento) {
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        document.querySelectorAll('.nav-item').forEach(nav => {
-            nav.classList.remove('active');
-        });
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
         document.getElementById('tab-' + tabId).classList.add('active');
         elemento.classList.add('active');
     }
 
-    // --- LÓGICA SELECTOR DE PORCIÓN (HOME) ---
+    // --- LÓGICA SELECTOR DE PORCIÓN ---
     function seleccionarPorcion(elemento) {
         let opciones = elemento.parentElement.children;
-        for(let i=0; i<opciones.length; i++) {
-            opciones[i].classList.remove('active');
-        }
+        for(let i=0; i<opciones.length; i++) opciones[i].classList.remove('active');
         elemento.classList.add('active');
     }
 
-    // --- LÓGICA NUEVA DE CALIBRACIÓN ---
-    let estaCalibrando = false;
+    // --- LÓGICA DEL BOTÓN PRINCIPAL (SIMULACIÓN DE ESTADOS) ---
+    function simularServir() {
+        const btn = document.getElementById('btn-servir-manual');
+        const tituloUltimaComida = document.getElementById('texto-ultima-comida');
+        
+        // 1. Estado "Cargando/Sirviendo"
+        btn.disabled = true;
+        btn.classList.add('btn-cargando');
+        btn.innerHTML = '<span class="spinner"></span> Sirviendo...';
+        
+        // Simular que el motor tarda 3 segundos en girar
+        setTimeout(() => {
+            // 2. Estado "Éxito"
+            btn.classList.remove('btn-cargando');
+            btn.classList.add('btn-exito');
+            btn.innerHTML = '✅ ¡Ración servida!';
+            
+            // Actualizar la hora en pantalla automáticamente
+            const ahora = new Date();
+            const hora = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            tituloUltimaComida.innerText = `Hoy, ${hora} hs (Manual)`;
+            
+            // 3. Volver al estado normal después de 2.5 segundos
+            setTimeout(() => {
+                btn.classList.remove('btn-exito');
+                btn.disabled = false;
+                btn.innerHTML = '<span>🍖</span> Dar de comer';
+            }, 2500);
+            
+        }, 3000); // 3000ms de "motor girando"
+    }
 
+    // --- LÓGICA MODAL "AGREGAR HORARIO" ---
+    function abrirModal() {
+        const overlay = document.getElementById('modal-overlay');
+        const sheet = document.getElementById('bottom-sheet');
+        overlay.style.display = 'block';
+        setTimeout(() => {
+            overlay.classList.add('active');
+            sheet.classList.add('active');
+        }, 10);
+    }
+
+    function cerrarModal() {
+        const overlay = document.getElementById('modal-overlay');
+        const sheet = document.getElementById('bottom-sheet');
+        sheet.classList.remove('active');
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+
+    function guardarHorario() {
+        // Acá iría la lógica para inyectar la nueva tarjeta de horario en el HTML y en Firebase
+        cerrarModal();
+        alert("¡Nuevo horario configurado! (Demostración)");
+    }
+
+    // --- LÓGICA CALIBRACIÓN ---
+    let estaCalibrando = false;
     function toggleCalibracion() {
         const btn = document.getElementById("btn-calibrar");
         const msj = document.getElementById("mensaje-calibracion");
 
         if (!estaCalibrando) {
-            // Empieza a calibrar
             estaCalibrando = true;
             btn.innerHTML = "⏹️ Detener y Guardar";
-            btn.classList.add("btn-grabando"); // Le pone el efecto de "latido" rojo
+            btn.classList.add("btn-grabando"); 
             msj.style.display = "none";
-            
-            // ACA EN EL FUTURO IRÁ EL CÓDIGO DE FIREBASE QUE LE AVISA AL ESP32 QUE ARRANQUE
-            console.log("Firebase: estado/calibrando -> true");
-
         } else {
-            // Detiene y guarda
             estaCalibrando = false;
             btn.innerHTML = "▶️ Iniciar Calibración";
             btn.classList.remove("btn-grabando");
             msj.style.display = "block";
-            
-            // ACA EN EL FUTURO IRÁ EL CÓDIGO DE FIREBASE QUE LE AVISA AL ESP32 QUE FRENE
-            console.log("Firebase: estado/calibrando -> false");
-
-            // Ocultar el mensaje de éxito después de 4 segundos para que quede prolijo
-            setTimeout(() => {
-                msj.style.display = "none";
-            }, 4000);
+            setTimeout(() => msj.style.display = "none", 4000);
         }
     }
 </script>
-
 </body>
 </html>
