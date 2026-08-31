@@ -246,39 +246,13 @@
                     <h3 style="color: var(--primary); font-size: 18px;">Modo Automático</h3>
                     <p style="font-size: 13px; color: var(--text-gray);">Activar o pausar rutinas</p>
                 </div>
-                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                <label class="switch"><input type="checkbox" id="switch-modo-auto" checked><span class="slider"></span></label>
             </div>
+            
             <h3 class="titulo-seccion">Configurar Rutinas</h3>
             
-            <div class="tarjeta tarjeta-columna">
-                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                    <h4 style="font-size: 16px; color: var(--primary);">☀️ Desayuno</h4>
-                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-                </div>
-                <div style="display: flex; gap: 10px; width: 100%;">
-                    <input type="time" value="08:00" style="flex: 1;">
-                    <select style="flex: 1;">
-                        <option value="0.5">Snack</option>
-                        <option value="1" selected>1 Porción</option>
-                        <option value="2">2 Porciones</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="tarjeta tarjeta-columna">
-                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                    <h4 style="font-size: 16px; color: var(--primary);">🌙 Cena</h4>
-                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-                </div>
-                <div style="display: flex; gap: 10px; width: 100%;">
-                    <input type="time" value="20:00" style="flex: 1;">
-                    <select style="flex: 1;">
-                        <option value="0.5">Snack</option>
-                        <option value="1">1 Porción</option>
-                        <option value="2" selected>2 Porciones</option>
-                    </select>
-                </div>
-            </div>
+            <!-- ACÁ SE INYECTAN LAS RUTINAS DESDE FIREBASE -->
+            <div id="lista-rutinas"></div>
 
             <button onclick="abrirModal()" style="width: 100%; padding: 15px; border-radius: 15px; border: 2px dashed var(--primary-light); background: transparent; color: var(--primary); font-weight: 800; cursor: pointer; margin-top: 10px;">
                 + Agregar otro horario
@@ -372,8 +346,8 @@
         <h3 class="titulo-seccion" style="margin-bottom: 20px;">Nuevo Horario</h3>
         
         <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 20px;">
-            <input type="time" value="12:00" style="flex: 1;">
-            <select style="flex: 1;">
+            <input type="time" id="nuevo-horario-hora" value="12:00" style="flex: 1;">
+            <select id="nuevo-horario-porcion" style="flex: 1;">
                 <option value="0.5">Snack</option>
                 <option value="1" selected>1 Porción</option>
                 <option value="2">2 Porciones</option>
@@ -381,14 +355,14 @@
         </div>
         
         <h4 style="font-size: 14px; color: var(--primary-light); margin-bottom: 5px;">Repetir los días:</h4>
-        <div class="dias-semana">
+        <div class="dias-semana" id="selector-dias">
             <div class="dia-burbuja active" onclick="this.classList.toggle('active')">L</div>
             <div class="dia-burbuja active" onclick="this.classList.toggle('active')">M</div>
             <div class="dia-burbuja active" onclick="this.classList.toggle('active')">M</div>
             <div class="dia-burbuja active" onclick="this.classList.toggle('active')">J</div>
             <div class="dia-burbuja active" onclick="this.classList.toggle('active')">V</div>
-            <div class="dia-burbuja" onclick="this.classList.toggle('active')">S</div>
-            <div class="dia-burbuja" onclick="this.classList.toggle('active')">D</div>
+            <div class="dia-burbuja active" onclick="this.classList.toggle('active')">S</div>
+            <div class="dia-burbuja active" onclick="this.classList.toggle('active')">D</div>
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 25px;">
@@ -401,7 +375,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     // Tu configuración exacta de Firebase
     const firebaseConfig = {
@@ -450,8 +424,86 @@
         document.getElementById('bottom-sheet').classList.remove('active');
     };
 
+    // === GESTIÓN DE RUTINAS ===
+    
     window.guardarHorario = function() {
-        cerrarModal(); 
+        const hora = document.getElementById("nuevo-horario-hora").value;
+        const porcionSel = document.getElementById("nuevo-horario-porcion");
+        const porcionValor = porcionSel.value;
+        const porcionTexto = porcionSel.options[porcionSel.selectedIndex].text;
+        
+        // Ver qué días están marcados
+        let dias = [];
+        const burbujas = document.querySelectorAll("#selector-dias .dia-burbuja");
+        burbujas.forEach((burbuja, index) => {
+            if(burbuja.classList.contains("active")) dias.push(index); 
+        });
+
+        if (dias.length === 0) {
+            alert("⚠️ Seleccioná al menos un día de la semana.");
+            return;
+        }
+
+        // Subir a Firebase
+        const rutinasRef = ref(db, 'comedero/rutinas');
+        push(rutinasRef, {
+            hora: hora,
+            porcion_valor: parseFloat(porcionValor),
+            porcion_texto: porcionTexto,
+            dias: dias,
+            activo: true
+        });
+
+        cerrarModal();
+    };
+
+    // Escuchar Firebase y dibujar las tarjetas
+    const refRutinas = ref(db, 'comedero/rutinas');
+    onValue(refRutinas, (snapshot) => {
+        const contenedor = document.getElementById("lista-rutinas");
+        contenedor.innerHTML = ""; // Limpiar antes de dibujar
+        
+        const data = snapshot.val();
+        if (data) {
+            // Ordenar por hora
+            const rutinasArray = Object.keys(data).map(key => ({ key, ...data[key] }));
+            rutinasArray.sort((a, b) => a.hora.localeCompare(b.hora));
+
+            rutinasArray.forEach(rutina => {
+                const nombresDias = ["L", "M", "M", "J", "V", "S", "D"];
+                let diasTexto = rutina.dias.map(d => nombresDias[d]).join("-");
+                if (rutina.dias.length === 7) diasTexto = "Todos los días";
+
+                const tarjeta = document.createElement("div");
+                tarjeta.className = "tarjeta tarjeta-columna";
+                tarjeta.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                        <div>
+                            <h4 style="font-size: 22px; color: var(--primary); font-weight: 900; line-height: 1;">${rutina.hora}</h4>
+                            <p style="font-size: 12px; color: var(--text-gray); font-weight: 800; margin-top: 5px;">${diasTexto} • ${rutina.porcion_texto}</p>
+                        </div>
+                        <div style="display:flex; align-items:center; gap: 15px;">
+                            <label class="switch">
+                                <input type="checkbox" ${rutina.activo ? 'checked' : ''} onchange="toggleRutina('${rutina.key}', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                            <button onclick="borrarRutina('${rutina.key}')" style="background:none; border:none; color:var(--danger); font-size:20px; cursor:pointer;">🗑️</button>
+                        </div>
+                    </div>
+                `;
+                contenedor.appendChild(tarjeta);
+            });
+        } else {
+            contenedor.innerHTML = '<p style="text-align:center; color:var(--text-gray); font-size:14px; margin-bottom:15px; font-weight: 800;">No hay rutinas programadas</p>';
+        }
+    });
+
+    window.toggleRutina = function(key, estado) {
+        update(ref(db, 'comedero/rutinas/' + key), { activo: estado });
+    };
+
+    window.borrarRutina = function(key) {
+        remove(ref(db, 'comedero/rutinas/' + key));
     };
 
     // ==========================================
@@ -656,6 +708,7 @@
             statusLabel.innerText = "❌ Error de conexión: " + error.message;
         }
     };
+
     // Escuchar la última comida para actualizar el título
     const refHistorial = ref(db, 'comedero/historial');
     onValue(refHistorial, (snapshot) => {
@@ -673,6 +726,8 @@
             }
         }
     });
+
+    
 </script>
 </body>
 </html>
