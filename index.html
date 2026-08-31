@@ -210,8 +210,9 @@
                 <p>Comedero Inteligente</p>
             </div>
         </div>
-        <div class="estado-conexion">
-            <div class="punto-verde"></div> En línea
+        <div id="badge-conexion" class="estado-conexion" style="background: #FFEBEE; color: var(--danger);">
+            <div id="punto-conexion" class="punto-verde" style="background: var(--danger);"></div> 
+            <span id="texto-conexion">Desconectado</span>
         </div>
     </header>
 
@@ -475,12 +476,25 @@
         }
     });
 
-    const refHistorial = ref(db, 'comedero/historial');
-    onValue(refHistorial, (snapshot) => {
-        const data = snapshot.val();
-        if(data && data.ultimo_evento) {
-            const tituloEstado = document.getElementById("texto-ultima-comida");
-            if(tituloEstado) tituloEstado.innerText = `${data.ultimo_evento} (${data.detalle})`;
+    // Escuchar si el ESP32 está conectado
+    const refConexion = ref(db, 'comedero/estado/en_linea');
+    onValue(refConexion, (snapshot) => {
+        const enLinea = snapshot.val();
+        const badge = document.getElementById("badge-conexion");
+        const punto = document.getElementById("punto-conexion");
+        const texto = document.getElementById("texto-conexion");
+        
+        if (enLinea === true) {
+            badge.style.background = "#E8F5E9";
+            badge.style.color = "var(--success)";
+            punto.style.background = "var(--success)";
+            texto.innerText = "En línea";
+        } else {
+            // Si es false o null (no existe el dato aún)
+            badge.style.background = "#FFEBEE";
+            badge.style.color = "var(--danger)";
+            punto.style.background = "var(--danger)";
+            texto.innerText = "Desconectado";
         }
     });
 
