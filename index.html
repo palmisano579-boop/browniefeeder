@@ -266,21 +266,8 @@
         <div id="tab-history" class="tab-content">
             <h3 class="titulo-seccion">Últimos movimientos</h3>
             <div class="tarjeta">
-                <ul class="lista-historial" style="width: 100%;">
-                    <li>
-                        <div>
-                            <div class="historial-hora">Hoy, 14:30 hs</div>
-                            <div class="historial-detalle">1 Porción (Automático)</div>
-                        </div>
-                        <div>✅</div>
-                    </li>
-                    <li>
-                        <div>
-                            <div class="historial-hora">Hoy, 08:00 hs</div>
-                            <div class="historial-detalle">1 Porción (Automático)</div>
-                        </div>
-                        <div>✅</div>
-                    </li>
+                <ul id="lista-historial-completo" class="lista-historial" style="width: 100%;">
+                    <!-- Acá se inyectan los movimientos desde Firebase -->
                 </ul>
             </div>
         </div>
@@ -618,6 +605,12 @@
             ultimo_evento: `Hoy, ${horaFormateada} hs`,
             detalle: `${textoPorcion} (Manual)`
         });
+
+        // 2. Agrega un renglón nuevo a la lista completa de la Pestaña Historial
+        push(ref(db, 'comedero/registro_historial'), {
+            fecha_hora: `Hoy, ${horaFormateada} hs`,
+            detalle: `${textoPorcion} (Manual)`
+        });
     };
 
     let estaCalibrando = false;
@@ -645,6 +638,36 @@
             }, 4000);
         }
     };
+
+    // === HISTORIAL COMPLETO (PESTAÑA 3) ===
+    const refRegistroHistorial = ref(db, 'comedero/registro_historial');
+    onValue(refRegistroHistorial, (snapshot) => {
+        const contenedor = document.getElementById("lista-historial-completo");
+        if (!contenedor) return;
+
+        contenedor.innerHTML = "";
+        const data = snapshot.val();
+
+        if (data) {
+            // Convertimos el objeto de Firebase a un array
+            const historialArray = Object.keys(data).map(key => data[key]);
+            
+            // Damos vuelta el array para ver lo más reciente arriba y cortamos en 15 ítems
+            historialArray.reverse().slice(0, 15).forEach(item => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <div>
+                        <div class="historial-hora">${item.fecha_hora}</div>
+                        <div class="historial-detalle">${item.detalle}</div>
+                    </div>
+                    <div>✅</div>
+                `;
+                contenedor.appendChild(li);
+            });
+        } else {
+            contenedor.innerHTML = '<p style="text-align:center; color:var(--text-gray); font-size:14px; font-weight:800; padding: 10px 0;">Aún no hay movimientos registrados</p>';
+        }
+    });
 
     // ==========================================
     // 3. LÓGICA BLUETOOTH PREMIUM (ESCANEO Y WI-FI)
