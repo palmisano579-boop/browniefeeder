@@ -105,10 +105,6 @@
             cursor: not-allowed;
             transform: scale(1) !important;
         }
-        .btn-exito {
-            background-color: var(--success) !important;
-            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3) !important;
-        }
         
         /* Animación del Spinner */
         .spinner {
@@ -143,7 +139,7 @@
             font-size: 16px; font-weight: 700; color: var(--primary); outline: none; background: #FDFBF7;
         }
 
-        /* --- MODAL / BOTTOM SHEET (NUEVO) --- */
+        /* --- MODAL / BOTTOM SHEET --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(62, 39, 35, 0.7);
@@ -235,7 +231,7 @@
                 <div class="opcion-porcion" onclick="seleccionarPorcion(this)">2 Porciones</div>
             </div>
             
-            <button id="btn-servir-manual" class="btn-principal" onclick="simularServir()">
+            <button id="btn-servir" class="btn-principal" onclick="servirComida()">
                 <span>🍖</span> Dar de comer
             </button>
         </div>
@@ -380,7 +376,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Tu configuración real de Firebase
+    // Tu configuración exacta
     const firebaseConfig = {
         apiKey: "AIzaSyD9Ep_vSVNKJHBUvFXyP1-BKR_8UYwc2Tw",
         authDomain: "browniefeeder.firebaseapp.com",
@@ -395,11 +391,7 @@
     const db = getDatabase(app);
 
     // ==========================================
-    // 1. LÓGICA VISUAL (PESTAÑAS Y BOTONES)
-    // ... (acá sigue todo el código que ya tenías) ...
-
-    // ==========================================
-    // 1. LÓGICA VISUAL (PESTAÑAS Y BOTONES)
+    // 1. LÓGICA VISUAL (PESTAÑAS Y MODALES)
     // ==========================================
     
     window.cambiarPestana = function(tabId, elemento) {
@@ -421,6 +413,19 @@
         elemento.classList.add('active');
     };
 
+    window.abrirModal = function() {
+        document.getElementById('modal-overlay').classList.add('active');
+        document.getElementById('bottom-sheet').classList.add('active');
+    };
+
+    window.cerrarModal = function() {
+        document.getElementById('modal-overlay').classList.remove('active');
+        document.getElementById('bottom-sheet').classList.remove('active');
+    };
+
+    window.guardarHorario = function() {
+        cerrarModal(); 
+    };
 
     // ==========================================
     // 2. LÓGICA DE FIREBASE (INTERNET DE LAS COSAS)
@@ -433,13 +438,13 @@
         const btnServir = document.getElementById("btn-servir");
         
         if (estaSirviendo === false && btnServir.disabled === true) {
-            btnServir.classList.remove("cargando");
+            btnServir.classList.remove("btn-cargando");
             btnServir.style.background = "var(--success)";
             btnServir.innerHTML = "✅ ¡Listo!";
             
             setTimeout(() => {
                 btnServir.style.background = ""; 
-                btnServir.innerHTML = "🍖 Dar de comer";
+                btnServir.innerHTML = "<span>🍖</span> Dar de comer";
                 btnServir.disabled = false;
             }, 3000);
         }
@@ -450,7 +455,7 @@
     onValue(refHistorial, (snapshot) => {
         const data = snapshot.val();
         if(data && data.ultimo_evento) {
-            const tituloEstado = document.querySelector(".tarjeta-estado h2");
+            const tituloEstado = document.getElementById("texto-ultima-comida");
             if(tituloEstado) tituloEstado.innerText = `${data.ultimo_evento} (${data.detalle})`;
         }
     });
@@ -459,8 +464,8 @@
     window.servirComida = function() {
         const btnServir = document.getElementById("btn-servir");
         
-        btnServir.classList.add("cargando");
-        btnServir.innerHTML = "⏳ Sirviendo...";
+        btnServir.classList.add("btn-cargando");
+        btnServir.innerHTML = "<div class='spinner'></div> <span style='margin-left:10px;'>Sirviendo...</span>";
         btnServir.disabled = true;
 
         let cantidad = 1;
