@@ -376,98 +376,116 @@
 
 </div>
 
-<script>
-    // --- LÓGICA DE PESTAÑAS ---
-    function cambiarPestana(tabId, elemento) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-        document.getElementById('tab-' + tabId).classList.add('active');
-        elemento.classList.add('active');
-    }
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // --- LÓGICA SELECTOR DE PORCIÓN ---
-    function seleccionarPorcion(elemento) {
-        let opciones = elemento.parentElement.children;
-        for(let i=0; i<opciones.length; i++) opciones[i].classList.remove('active');
-        elemento.classList.add('active');
-    }
+    // ⚠️ TUS DATOS DE FIREBASE (¡No te olvides de poner los tuyos!) ⚠️
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY_ACA",
+        databaseURL: "https://TU-PROYECTO.firebaseio.com",
+        projectId: "TU-PROYECTO"
+    };
 
-    // --- LÓGICA DEL BOTÓN PRINCIPAL (SIMULACIÓN DE ESTADOS) ---
-    function simularServir() {
-        const btn = document.getElementById('btn-servir-manual');
-        const tituloUltimaComida = document.getElementById('texto-ultima-comida');
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // --- 1. ESCUCHAR AL ESP32 EN TIEMPO REAL ---
+    
+    // Escuchamos el estado del motor para el botón manual
+    const refEjecutar = ref(db, 'comedero/orden_manual/ejecutar');
+    onValue(refEjecutar, (snapshot) => {
+        const estaSirviendo = snapshot.val();
+        const btnServir = document.getElementById("btn-servir");
         
-        // 1. Estado "Cargando/Sirviendo"
-        btn.disabled = true;
-        btn.classList.add('btn-cargando');
-        btn.innerHTML = '<span class="spinner"></span> Sirviendo...';
-        
-        // Simular que el motor tarda 3 segundos en girar
-        setTimeout(() => {
-            // 2. Estado "Éxito"
-            btn.classList.remove('btn-cargando');
-            btn.classList.add('btn-exito');
-            btn.innerHTML = '✅ ¡Ración servida!';
+        // Si el botón estaba bloqueado (sirviendo) y Firebase nos dice false, ¡terminó el ESP32!
+        if (estaSirviendo === false && btnServir.disabled === true) {
+            btnServir.classList.remove("cargando");
+            btnServir.style.background = "var(--success)";
+            btnServir.innerHTML = "✅ ¡Listo!";
             
-            // Actualizar la hora en pantalla automáticamente
-            const ahora = new Date();
-            const hora = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            tituloUltimaComida.innerText = `Hoy, ${hora} hs (Manual)`;
-            
-            // 3. Volver al estado normal después de 2.5 segundos
+            // Volvemos el botón a la normalidad a los 3 segundos
             setTimeout(() => {
-                btn.classList.remove('btn-exito');
-                btn.disabled = false;
-                btn.innerHTML = '<span>🍖</span> Dar de comer';
-            }, 2500);
-            
-        }, 3000); // 3000ms de "motor girando"
-    }
+                btnServir.style.background = ""; // Vuelve al color del CSS
+                btnServir.innerHTML = "🍖 Dar de comer";
+                btnServir.disabled = false;
+            }, 3000);
+        }
+    });
 
-    // --- LÓGICA MODAL "AGREGAR HORARIO" ---
-    function abrirModal() {
-        const overlay = document.getElementById('modal-overlay');
-        const sheet = document.getElementById('bottom-sheet');
-        overlay.style.display = 'block';
-        setTimeout(() => {
-            overlay.classList.add('active');
-            sheet.classList.add('active');
-        }, 10);
-    }
+    // Escuchamos el historial para actualizar la UI apenas el perro come
+    const refHistorial = ref(db, 'comedero/historial');
+    onValue(refHistorial, (snapshot) => {
+        const data = snapshot.val();
+        if(data && data.ultimo_evento) {
+            const tituloEstado = document.querySelector(".tarjeta-estado h2");
+            if(tituloEstado) tituloEstado.innerText = `${data.ultimo_evento} (${data.detalle})`;
+        }
+    });
 
-    function cerrarModal() {
-        const overlay = document.getElementById('modal-overlay');
-        const sheet = document.getElementById('bottom-sheet');
-        sheet.classList.remove('active');
-        overlay.classList.remove('active');
-        setTimeout(() => overlay.style.display = 'none', 300);
-    }
 
-    function guardarHorario() {
-        // Acá iría la lógica para inyectar la nueva tarjeta de horario en el HTML y en Firebase
-        cerrarModal();
-        alert("¡Nuevo horario configurado! (Demostración)");
-    }
+    // --- 2. ENVIAR ÓRDENES A FIREBASE (Desde la UI) ---
 
-    // --- LÓGICA CALIBRACIÓN ---
+    // Exponemos las funciones al HTML (window.funcion)
+    window.servirComida = function() {
+        const btnServir = document.getElementById("btn-servir");
+        
+        // 1. Bloqueamos la interfaz
+        btnServir.classList.add("cargando");
+        btnServir.innerHTML = "⏳ Sirviendo...";
+        btnServir.disabled = true;
+
+        // 2. Buscamos qué porción seleccionó el usuario en la UI
+        let cantidad = 1;
+        const activa = document.querySelector(".selector-porcion .active");
+        if (activa) {
+            if(activa.innerText.includes("Snack")) cantidad = 0.5;
+            if(activa.innerText.includes("2")) cantidad = 2;
+        }
+
+        // 3. Mandamos la orden de giro
+        update(ref(db, 'comedero/orden_manual'), {
+            cantidad_porciones: cantidad,
+            ejecutar: true
+        });
+        
+        // 4. Actualizamos el registro de última comida
+        const ahora = new Date();
+        const horaFormateada = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        update(ref(db, 'comedero/historial'), {
+            ultimo_evento: `Hoy, ${horaFormateada} hs`,
+            detalle: `${cantidad} Porción/es (Manual)`
+        });
+    };
+
+    // Lógica de Calibración
     let estaCalibrando = false;
-    function toggleCalibracion() {
-        const btn = document.getElementById("btn-calibrar");
-        const msj = document.getElementById("mensaje-calibracion");
+    window.toggleCalibracion = function() {
+        const btnCalibrar = document.getElementById("btn-calibrar");
+        const msjCalibracion = document.getElementById("mensaje-calibracion");
 
         if (!estaCalibrando) {
             estaCalibrando = true;
-            btn.innerHTML = "⏹️ Detener y Guardar";
-            btn.classList.add("btn-grabando"); 
-            msj.style.display = "none";
+            btnCalibrar.innerHTML = "⏹️ Detener y Guardar";
+            btnCalibrar.classList.add("btn-grabando");
+            msjCalibracion.style.display = "none";
+            
+            // Le decimos al ESP32 que empiece a girar y contar
+            set(ref(db, 'comedero/estado/calibrando'), true);
         } else {
             estaCalibrando = false;
-            btn.innerHTML = "▶️ Iniciar Calibración";
-            btn.classList.remove("btn-grabando");
-            msj.style.display = "block";
-            setTimeout(() => msj.style.display = "none", 4000);
+            btnCalibrar.innerHTML = "▶️ Iniciar Calibración";
+            btnCalibrar.classList.remove("btn-grabando");
+            msjCalibracion.style.display = "block";
+            
+            // Le decimos al ESP32 que frene y guarde el cálculo
+            set(ref(db, 'comedero/estado/calibrando'), false);
+
+            setTimeout(() => {
+                msjCalibracion.style.display = "none";
+            }, 4000);
         }
-    }
+    };
 </script>
 </body>
 </html>
