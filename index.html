@@ -527,6 +527,60 @@
             }, 4000);
         }
     };
+    // ==========================================
+    // 3. LÓGICA BLUETOOTH (CONFIGURACIÓN WI-FI)
+    // ==========================================
+    
+    window.enviarWiFiBluetooth = async function() {
+        const ssid = document.getElementById('wifi-ssid').value.trim();
+        const pass = document.getElementById('wifi-pass').value.trim();
+        const statusLabel = document.getElementById('bt-status');
+
+        if (!ssid) {
+            statusLabel.style.color = "var(--danger)";
+            statusLabel.innerText = "⚠️ Escribí el nombre del Wi-Fi";
+            return;
+        }
+
+        try {
+            statusLabel.style.color = "var(--text-gray)";
+            statusLabel.innerText = "Buscando comedero...";
+            
+            // 1. Pedir permiso para buscar el ESP32 por Bluetooth
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ name: 'Brownie-ESP32' }],
+                optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1214'] // Código de servicio único
+            });
+
+            statusLabel.innerText = "Conectando...";
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1214');
+            const characteristic = await service.getCharacteristic('19b10001-e8f2-537e-4f6c-d104768a1214');
+
+            statusLabel.innerText = "Enviando contraseña...";
+            
+            // 2. Armar el paquete de datos y enviarlo
+            const payload = ssid + "||" + pass;
+            const encoder = new TextEncoder();
+            await characteristic.writeValue(encoder.encode(payload));
+
+            // 3. Éxito
+            statusLabel.style.color = "var(--success)";
+            statusLabel.innerText = "✅ ¡Guardado! El comedero se está reiniciando.";
+            
+            // Desconectar Bluetooth para liberar la antena
+            device.gatt.disconnect();
+            
+            // Limpiar los campos por seguridad
+            document.getElementById('wifi-ssid').value = "";
+            document.getElementById('wifi-pass').value = "";
+
+        } catch (error) {
+            console.error(error);
+            statusLabel.style.color = "var(--danger)";
+            statusLabel.innerText = "❌ Error: " + error.message;
+        }
+    };
 </script>
 </body>
 </html>
