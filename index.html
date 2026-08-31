@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comedero Inteligente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Importamos Firebase desde la nube -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+      // ACA PONÉS TUS DATOS DE FIREBASE
+      const firebaseConfig = {
+        apiKey: "TU_API_KEY_ACA",
+        databaseURL: "https://TU-PROYECTO.firebaseio.com",
+        projectId: "TU-PROYECTO"
+      };
+
+      // Inicializamos Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      // Función que se ejecuta al apretar el botón
+      window.servirComida = function() {
+        const boton = document.getElementById("btn-servir");
+        boton.innerText = "Sirviendo...";
+        boton.disabled = true;
+
+        // Le mandamos la orden a la base de datos!
+        set(ref(db, 'estado/servir_comida'), true)
+          .then(() => {
+            alert("¡Orden enviada a casa!");
+            setTimeout(() => {
+                boton.innerText = "Dar de comer ahora";
+                boton.disabled = false;
+            }, 5000); // Rehabilitamos el botón a los 5 segundos
+          });
+      };
+    </script>
+    <style>
+        body { text-align: center; font-family: Arial; padding: 50px; background-color: #f4f4f9;}
+        button { padding: 20px 40px; font-size: 20px; background-color: #4CAF50; color: white; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2);}
+        button:disabled { background-color: #ccc; }
+    </style>
+</head>
+<body>
+    <h1>🐶 Comedero de Firulais</h1>
+    <button id="btn-servir" onclick="servirComida()">Dar de comer ahora</button>
+</body>
+</html>
