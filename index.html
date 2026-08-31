@@ -55,8 +55,10 @@
 
         .perfil { display: flex; align-items: center; gap: 15px; }
         .perfil img {
-            width: 60px; height: 60px; border-radius: 50%; object-fit: cover;
-            border: 3px solid var(--primary);
+            width: 60px; 
+            height: 60px; 
+            object-fit: contain;
+            filter: drop-shadow(2px 4px 6px rgba(109, 76, 65, 0.2));
         }
         .perfil h1 { font-size: 22px; font-weight: 900; color: var(--primary); }
         .perfil p { font-size: 13px; color: var(--text-gray); font-weight: 600; }
@@ -202,9 +204,9 @@
     <!-- HEADER -->
     <header>
         <div class="perfil">
-            <img src="https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=200&auto=format&fit=crop" alt="Brownie">
+            <img src="Fondo transparente.png" alt="Brownie Feeder">
             <div>
-                <h1>Brownie</h1>
+                <h1>Brownie Feeder</h1>
                 <p>Comedero Inteligente</p>
             </div>
         </div>
@@ -220,7 +222,7 @@
         <div id="tab-home" class="tab-content active">
             <div class="tarjeta-estado">
                 <h3>Última comida servida</h3>
-                <h2 id="texto-ultima-comida">Hoy, 14:30 hs (Automático)</h2>
+                <h2 id="texto-ultima-comida"></h2>
             </div>
             
             <h3 class="titulo-seccion">Servir ahora</h3>
@@ -490,10 +492,13 @@
         btnServir.disabled = true;
 
         let cantidad = 1;
+        let textoPorcion = "1 Porción"; // Guardamos el texto exacto
+        
         const activa = document.querySelector(".selector-porcion .active");
         if (activa) {
-            if(activa.innerText.includes("Snack")) cantidad = 0.5;
-            if(activa.innerText.includes("2")) cantidad = 2;
+            textoPorcion = activa.innerText.trim();
+            if(textoPorcion.includes("Snack")) cantidad = 0.5;
+            if(textoPorcion.includes("2")) cantidad = 2;
         }
 
         update(ref(db, 'comedero/orden_manual'), {
@@ -502,10 +507,12 @@
         });
         
         const ahora = new Date();
-        const horaFormateada = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        // Forzamos formato 24hs (ej. 14:57 en vez de 02:57 pm)
+        const horaFormateada = ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+        
         update(ref(db, 'comedero/historial'), {
             ultimo_evento: `Hoy, ${horaFormateada} hs`,
-            detalle: `${cantidad} Porción/es (Manual)`
+            detalle: `${textoPorcion} (Manual)`
         });
     };
 
