@@ -246,7 +246,10 @@
                     <h3 style="color: var(--primary); font-size: 18px;">Modo Automático</h3>
                     <p style="font-size: 13px; color: var(--text-gray);">Activar o pausar rutinas</p>
                 </div>
-                <label class="switch"><input type="checkbox" id="switch-modo-auto" checked><span class="slider"></span></label>
+                <label class="switch">
+                    <input type="checkbox" id="switch-modo-auto" checked onchange="toggleModoAuto(this.checked)">
+                    <span class="slider"></span>
+                </label>
             </div>
             
             <h3 class="titulo-seccion">Configurar Rutinas</h3>
@@ -425,6 +428,26 @@
     };
 
     // === GESTIÓN DE RUTINAS ===
+
+    // === MODO AUTOMÁTICO GENERAL ===
+    
+    // Escuchar si alguien lo apaga o prende
+    const refModoAuto = ref(db, 'comedero/estado/modo_automatico');
+    onValue(refModoAuto, (snapshot) => {
+        const modoAutomatico = snapshot.val();
+        const switchAuto = document.getElementById("switch-modo-auto");
+        
+        if (switchAuto && modoAutomatico !== null) {
+            switchAuto.checked = modoAutomatico;
+        }
+    });
+
+    // Avisar a Firebase cuando lo tocamos
+    window.toggleModoAuto = function(estado) {
+        update(ref(db, 'comedero/estado'), { 
+            modo_automatico: estado 
+        });
+    };
     
     window.guardarHorario = async function() {
         const hora = document.getElementById("nuevo-horario-hora").value;
