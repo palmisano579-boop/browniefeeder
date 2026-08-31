@@ -380,15 +380,23 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ TUS DATOS DE FIREBASE ⚠️
+    // Tu configuración real de Firebase
     const firebaseConfig = {
-        apiKey: "TU_API_KEY_ACA",
-        databaseURL: "https://TU-PROYECTO.firebaseio.com",
-        projectId: "TU-PROYECTO"
+        apiKey: "AIzaSyD9Ep_vSVNKJHBUvFXyP1-BKR_8UYwc2Tw",
+        authDomain: "browniefeeder.firebaseapp.com",
+        databaseURL: "https://browniefeeder-default-rtdb.firebaseio.com",
+        projectId: "browniefeeder",
+        storageBucket: "browniefeeder.firebasestorage.app",
+        messagingSenderId: "227939962986",
+        appId: "1:227939962986:web:b35dbe998e6ab166437a13"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+
+    // ==========================================
+    // 1. LÓGICA VISUAL (PESTAÑAS Y BOTONES)
+    // ... (acá sigue todo el código que ya tenías) ...
 
     // ==========================================
     // 1. LÓGICA VISUAL (PESTAÑAS Y BOTONES)
