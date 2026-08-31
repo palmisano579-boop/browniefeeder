@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+    <!-- Configuración PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6D4C41">
+
+    <!-- Compatibilidad con iPhone / iPad -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Brownie">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BrownieFeeder App</title>
@@ -364,6 +375,10 @@
 </div>
 
 <script type="module">
+
+    if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, update, push, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
