@@ -3,148 +3,356 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BrownieFeeder</title>
-    
-    <!-- Fuente moderna de Google -->
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>BrownieFeeder App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
-        /* Reseteo y estilos base */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; }
+        /* --- PALETA DE COLORES (Tonos Marrones/Café) --- */
+        :root {
+            --bg-color: #F7F3EB;       /* Crema muy suave de fondo */
+            --primary: #6D4C41;        /* Marrón café (botones y acentos) */
+            --primary-light: #8D6E63;  /* Marrón claro */
+            --text-dark: #3E2723;      /* Texto principal casi negro */
+            --text-gray: #795548;      /* Texto secundario */
+            --card-bg: #FFFFFF;        /* Fondo de tarjetas */
+            --success: #4CAF50;        /* Verde para conexión */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent;}
         
         body { 
-            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-            height: 100vh; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-        }
-
-        /* La "App" en sí */
-        .app-container {
-            background-color: white;
-            width: 90%;
-            max-width: 400px;
-            border-radius: 30px;
-            padding: 40px 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-
-        /* Foto del perro */
-        .foto-perfil {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #ff9f43;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 20px rgba(255, 159, 67, 0.3);
-        }
-
-        h1 { color: #2d3436; font-size: 28px; margin-bottom: 5px; font-weight: 900;}
-        p.subtitulo { color: #636e72; font-size: 16px; margin-bottom: 40px; }
-
-        /* El súper botón */
-        .btn-principal {
-            background: #ff9f43;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 20px;
-            font-size: 22px;
-            font-weight: 700;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 10px 20px rgba(255, 159, 67, 0.4);
+            background-color: var(--bg-color); 
+            color: var(--text-dark);
             display: flex;
             justify-content: center;
+        }
+
+        /* Contenedor principal simulando pantalla de celular */
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-color: var(--bg-color);
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        /* --- HEADER (Foto y Estado) --- */
+        header {
+            padding: 30px 20px 20px;
+            background: var(--card-bg);
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 0 4px 15px rgba(109, 76, 65, 0.08);
+            display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            z-index: 10;
         }
 
-        .btn-principal:active { transform: scale(0.95); box-shadow: 0 5px 10px rgba(255, 159, 67, 0.4); }
+        .perfil { display: flex; align-items: center; gap: 15px; }
+        .perfil img {
+            width: 60px; height: 60px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--primary);
+        }
+        .perfil h1 { font-size: 22px; font-weight: 900; color: var(--primary); }
+        .perfil p { font-size: 13px; color: var(--text-gray); font-weight: 600; }
         
-        .btn-principal.cargando {
-            background: #feca57;
-            cursor: not-allowed;
-            transform: scale(1);
-            box-shadow: none;
+        /* Indicador de conexión */
+        .estado-conexion {
+            display: flex; align-items: center; gap: 6px;
+            background: #E8F5E9; padding: 6px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 800; color: var(--success);
+        }
+        .punto-verde { width: 10px; height: 10px; background: var(--success); border-radius: 50%; }
+
+        /* --- ZONA DE CONTENIDO (Pestañas) --- */
+        .contenido { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 90px; }
+        
+        /* Ocultar pestañas no activas */
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- PESTAÑA 1: INICIO --- */
+        .tarjeta-estado {
+            background: var(--card-bg); border-radius: 20px; padding: 20px; text-align: center;
+            box-shadow: 0 5px 15px rgba(109, 76, 65, 0.05); margin-bottom: 25px;
+        }
+        .tarjeta-estado h3 { color: var(--text-gray); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;}
+        .tarjeta-estado h2 { font-size: 20px; color: var(--primary); margin-top: 5px; }
+
+        .selector-porcion {
+            display: flex; justify-content: space-between; background: #EFEBE1;
+            border-radius: 15px; padding: 5px; margin-bottom: 20px;
+        }
+        .selector-porcion div {
+            flex: 1; text-align: center; padding: 12px 5px; font-size: 14px;
+            font-weight: 800; color: var(--text-gray); border-radius: 12px; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .selector-porcion div.active { background: var(--card-bg); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        .btn-principal {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 25px; font-size: 22px; font-weight: 900; border-radius: 25px;
+            cursor: pointer; transition: all 0.2s ease; box-shadow: 0 10px 20px rgba(109, 76, 65, 0.3);
+        }
+        .btn-principal:active { transform: scale(0.96); }
+
+        /* --- ELEMENTOS GLOBALES (Tarjetas y Switches) --- */
+        .tarjeta {
+            background: var(--card-bg); border-radius: 20px; padding: 20px;
+            box-shadow: 0 5px 15px rgba(109, 76, 65, 0.05); margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .tarjeta-columna { flex-direction: column; align-items: flex-start; gap: 15px;}
+        
+        .titulo-seccion { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 15px; }
+
+        /* El botón Switch estilo iOS */
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* Inputs y Selects */
+        input[type="time"], select, input[type="number"] {
+            padding: 10px; border-radius: 10px; border: 1px solid #EFEBE1;
+            font-size: 16px; font-weight: 700; color: var(--primary); outline: none; background: #FDFBF7;
         }
 
-        /* Texto de estado abajo */
-        .estado-texto {
-            margin-top: 30px;
-            font-size: 14px;
-            color: #b2bec3;
-            font-weight: 700;
+        /* --- NAVEGACIÓN INFERIOR --- */
+        nav {
+            position: fixed; bottom: 0; width: 100%; max-width: 450px;
+            background: var(--card-bg); display: flex; justify-content: space-around;
+            padding: 15px 10px 25px; border-top-left-radius: 25px; border-top-right-radius: 25px;
+            box-shadow: 0 -5px 20px rgba(109, 76, 65, 0.08); z-index: 100;
         }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            color: #BCAAA4; cursor: pointer; transition: all 0.2s ease;
+        }
+        .nav-item.active { color: var(--primary); transform: translateY(-3px); }
+        .nav-item i { font-size: 24px; font-style: normal;}
+        .nav-item span { font-size: 11px; font-weight: 800; }
+        
+        /* Lista de Historial */
+        .lista-historial { list-style: none; }
+        .lista-historial li { padding: 15px 0; border-bottom: 1px solid #EFEBE1; display: flex; justify-content: space-between; align-items: center;}
+        .lista-historial li:last-child { border-bottom: none; }
+        .historial-hora { font-weight: 800; color: var(--primary); }
+        .historial-detalle { font-size: 13px; color: var(--text-gray); }
+
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <!-- Podés cambiar la URL de esta imagen por una de tu perro! -->
-        <img src="https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=400&auto=format&fit=crop" alt="Brownie" class="foto-perfil">
-        
-        <h1>BrownieFeeder</h1>
-        <p class="subtitulo">Control de alimentación IoT</p>
+<div class="app-container">
+    
+    <!-- HEADER -->
+    <header>
+        <div class="perfil">
+            <!-- Podes cambiar esta URL por una foto de Brownie -->
+            <img src="https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=200&auto=format&fit=crop" alt="Brownie">
+            <div>
+                <h1>Brownie</h1>
+                <p>Comedero Inteligente</p>
+            </div>
+        </div>
+        <div class="estado-conexion">
+            <div class="punto-verde"></div> En línea
+        </div>
+    </header>
 
-        <button id="btn-servir" class="btn-principal" onclick="servirComida()">
-            🍖 Dar de comer
-        </button>
+    <!-- CONTENIDO CENTRAL -->
+    <div class="contenido">
 
-        <p class="estado-texto" id="texto-ultima-vez">Última ración: Todavía no sirvió hoy</p>
+        <!-- PESTAÑA 1: INICIO (HOME) -->
+        <div id="tab-home" class="tab-content active">
+            <div class="tarjeta-estado">
+                <h3>Última comida servida</h3>
+                <h2>Hoy, 14:30 hs (Automático)</h2>
+            </div>
+
+            <h3 class="titulo-seccion">Servir ahora</h3>
+            
+            <div class="selector-porcion">
+                <div class="opcion-porcion" onclick="seleccionarPorcion(this)">Snack</div>
+                <div class="opcion-porcion active" onclick="seleccionarPorcion(this)">1 Porción</div>
+                <div class="opcion-porcion" onclick="seleccionarPorcion(this)">2 Porciones</div>
+            </div>
+
+            <button class="btn-principal" onclick="alert('Simulación: Sirviendo comida a Brownie!')">
+                🍖 Dar de comer
+            </button>
+        </div>
+
+        <!-- PESTAÑA 2: HORARIOS -->
+        <div id="tab-schedule" class="tab-content">
+            <div class="tarjeta">
+                <div>
+                    <h3 style="color: var(--primary); font-size: 18px;">Modo Automático</h3>
+                    <p style="font-size: 13px; color: var(--text-gray);">Activar o pausar rutinas</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <h3 class="titulo-seccion">Configurar Rutinas</h3>
+            
+            <!-- Desayuno -->
+            <div class="tarjeta tarjeta-columna">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <h4 style="font-size: 16px; color: var(--primary);">☀️ Desayuno</h4>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <input type="time" value="08:00" style="flex: 1;">
+                    <select style="flex: 1;">
+                        <option value="0.5">Snack</option>
+                        <option value="1" selected>1 Porción</option>
+                        <option value="2">2 Porciones</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Cena -->
+            <div class="tarjeta tarjeta-columna">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                    <h4 style="font-size: 16px; color: var(--primary);">🌙 Cena</h4>
+                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <input type="time" value="20:00" style="flex: 1;">
+                    <select style="flex: 1;">
+                        <option value="0.5">Snack</option>
+                        <option value="1">1 Porción</option>
+                        <option value="2" selected>2 Porciones</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button style="width: 100%; padding: 15px; border-radius: 15px; border: 2px dashed var(--primary-light); background: transparent; color: var(--primary); font-weight: 800; cursor: pointer;">
+                + Agregar otro horario
+            </button>
+        </div>
+
+        <!-- PESTAÑA 3: HISTORIAL -->
+        <div id="tab-history" class="tab-content">
+            <h3 class="titulo-seccion">Últimos movimientos</h3>
+            <div class="tarjeta">
+                <ul class="lista-historial" style="width: 100%;">
+                    <li>
+                        <div>
+                            <div class="historial-hora">Hoy, 14:30 hs</div>
+                            <div class="historial-detalle">1 Porción (Automático)</div>
+                        </div>
+                        <div>✅</div>
+                    </li>
+                    <li>
+                        <div>
+                            <div class="historial-hora">Hoy, 08:00 hs</div>
+                            <div class="historial-detalle">1 Porción (Automático)</div>
+                        </div>
+                        <div>✅</div>
+                    </li>
+                    <li>
+                        <div>
+                            <div class="historial-hora">Ayer, 21:15 hs</div>
+                            <div class="historial-detalle">Snack (Manual)</div>
+                        </div>
+                        <div>👤</div>
+                    </li>
+                    <li>
+                        <div>
+                            <div class="historial-hora">Ayer, 20:00 hs</div>
+                            <div class="historial-detalle">2 Porciones (Automático)</div>
+                        </div>
+                        <div>✅</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 4: AJUSTES -->
+        <div id="tab-settings" class="tab-content">
+            <h3 class="titulo-seccion">Calibración del Motor</h3>
+            <div class="tarjeta tarjeta-columna">
+                <p style="font-size: 14px; color: var(--text-gray);">
+                    Ajustá cuántas vueltas debe dar el mecanismo para servir <strong>1 Porción estándar</strong>.
+                </p>
+                <div style="display: flex; align-items: center; gap: 15px; width: 100%;">
+                    <input type="number" value="5" min="1" max="20" style="width: 80px; text-align: center; font-size: 20px;">
+                    <span style="font-weight: 800; color: var(--primary);">Vueltas por porción</span>
+                </div>
+                <button style="width: 100%; background: var(--primary-light); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 10px;">
+                    Guardar calibración
+                </button>
+            </div>
+            
+            <div class="tarjeta tarjeta-columna" style="margin-top: 20px;">
+                <h4 style="font-size: 16px; color: #d63031;">Zona Peligrosa</h4>
+                <button style="width: 100%; background: #ff7675; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer;">
+                    🔄 Reiniciar ESP32
+                </button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Scripts de Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    <!-- NAVEGACIÓN INFERIOR -->
+    <nav>
+        <div class="nav-item active" onclick="cambiarPestana('home', this)">
+            <i>🏠</i><span>Inicio</span>
+        </div>
+        <div class="nav-item" onclick="cambiarPestana('schedule', this)">
+            <i>⏰</i><span>Rutina</span>
+        </div>
+        <div class="nav-item" onclick="cambiarPestana('history', this)">
+            <i>📋</i><span>Historial</span>
+        </div>
+        <div class="nav-item" onclick="cambiarPestana('settings', this)">
+            <i>⚙️</i><span>Ajustes</span>
+        </div>
+    </nav>
 
-        // ⚠️ PEGAR TUS DATOS DE FIREBASE ACA ⚠️
-        const firebaseConfig = {
-            apiKey: "TU_API_KEY_ACA",
-            databaseURL: "https://TU-PROYECTO.firebaseio.com",
-            projectId: "TU-PROYECTO"
-        };
+</div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+<script>
+    // Función para cambiar de pestañas en el menú inferior
+    function cambiarPestana(tabId, elemento) {
+        // Ocultar todas las pestañas
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        // Despintar todos los botones del menú
+        document.querySelectorAll('.nav-item').forEach(nav => {
+            nav.classList.remove('active');
+        });
+        
+        // Activar la pestaña y el botón seleccionado
+        document.getElementById('tab-' + tabId).classList.add('active');
+        elemento.classList.add('active');
+    }
 
-        // Exponer la función al botón HTML
-        window.servirComida = function() {
-            const boton = document.getElementById("btn-servir");
-            const textoEstado = document.getElementById("texto-ultima-vez");
-            
-            // Cambiar aspecto del botón
-            boton.classList.add("cargando");
-            boton.innerHTML = "⏳ Sirviendo ración...";
-            boton.disabled = true;
+    // Función visual para los botones de porción (Snack / 1 Porcion / 2 Porciones)
+    function seleccionarPorcion(elemento) {
+        // Deseleccionar todos
+        let opciones = elemento.parentElement.children;
+        for(let i=0; i<opciones.length; i++) {
+            opciones[i].classList.remove('active');
+        }
+        // Seleccionar el tocado
+        elemento.classList.add('active');
+    }
+</script>
 
-            // Enviar orden a Firebase
-            set(ref(db, 'estado/servir_comida'), true)
-                .then(() => {
-                    // Actualizar la hora en la pantalla
-                    const ahora = new Date();
-                    const horaFormateada = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    
-                    // Simular el tiempo que tarda el motor (ej. 5 segundos)
-                    setTimeout(() => {
-                        boton.classList.remove("cargando");
-                        boton.innerHTML = "🍖 Dar de comer";
-                        boton.disabled = false;
-                        textoEstado.innerHTML = "Última ración: Hoy a las " + horaFormateada;
-                    }, 5000); 
-                })
-                .catch((error) => {
-                    alert("Error de conexión: " + error);
-                    boton.classList.remove("cargando");
-                    boton.innerHTML = "🍖 Intentar de nuevo";
-                    boton.disabled = false;
-                });
-        };
-    </script>
 </body>
 </html>
