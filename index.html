@@ -330,7 +330,6 @@
                     <i>🔍</i> Buscar redes Wi-Fi
                 </button>
 
-                <!-- Este panel arranca oculto hasta que el ESP32 mande las redes -->
                 <div id="panel-wifi-redes" style="display: none; width: 100%; flex-direction: column; gap: 10px; margin-top: 10px;">
                     <select id="wifi-ssid-select" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #EFEBE1; color: var(--primary); font-weight: 700;">
                         <option value="">Seleccioná tu red...</option>
@@ -344,6 +343,9 @@
                 
                 <div id="bt-status" style="font-size: 12px; font-weight: 800; color: var(--text-gray); margin-top: 10px; text-align: center; width: 100%;"></div>
             </div>
+        </div>
+
+    </div> <!-- ESTE DIV CIERRA LA ZONA DE CONTENIDO Y SEGURO FALTABA -->
 
     <!-- NAVEGACIÓN INFERIOR -->
     <nav>
@@ -398,7 +400,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Tu configuración exacta
+    // Tu configuración exacta de Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyD9Ep_vSVNKJHBUvFXyP1-BKR_8UYwc2Tw",
         authDomain: "browniefeeder.firebaseapp.com",
@@ -453,7 +455,6 @@
     // 2. LÓGICA DE FIREBASE (INTERNET DE LAS COSAS)
     // ==========================================
 
-    // Escuchar al ESP32 para saber cuándo terminó de servir
     const refEjecutar = ref(db, 'comedero/orden_manual/ejecutar');
     onValue(refEjecutar, (snapshot) => {
         const estaSirviendo = snapshot.val();
@@ -472,7 +473,6 @@
         }
     });
 
-    // Escuchar la última comida para actualizar el título
     const refHistorial = ref(db, 'comedero/historial');
     onValue(refHistorial, (snapshot) => {
         const data = snapshot.val();
@@ -482,7 +482,6 @@
         }
     });
 
-    // Botón Principal: Mandar orden de comida
     window.servirComida = function() {
         const btnServir = document.getElementById("btn-servir");
         
@@ -510,7 +509,6 @@
         });
     };
 
-    // Botón de Calibración Inteligente
     let estaCalibrando = false;
     window.toggleCalibracion = function() {
         const btnCalibrar = document.getElementById("btn-calibrar");
@@ -536,13 +534,14 @@
             }, 4000);
         }
     };
-   // ==========================================
+
+    // ==========================================
     // 3. LÓGICA BLUETOOTH PREMIUM (ESCANEO Y WI-FI)
     // ==========================================
     
     let bleDevice;
-    let bleTxCharacteristic; // Para mandarle órdenes al ESP32
-    let bleRxCharacteristic; // Para recibir la lista de redes del ESP32
+    let bleTxCharacteristic;
+    let bleRxCharacteristic;
     let redesEncontradas = "";
 
     window.escanearWiFiBluetooth = async function() {
@@ -554,7 +553,6 @@
             statusLabel.style.color = "var(--text-gray)";
             statusLabel.innerText = "Buscando comedero por Bluetooth...";
             
-            // 1. Pedir permiso al usuario
             bleDevice = await navigator.bluetooth.requestDevice({
                 filters: [{ name: 'Brownie-ESP32' }],
                 optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1214']
@@ -564,18 +562,15 @@
             const server = await bleDevice.gatt.connect();
             const service = await server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1214');
             
-            // Obtenemos los dos canales de comunicación
             bleTxCharacteristic = await service.getCharacteristic('19b10001-e8f2-537e-4f6c-d104768a1214');
             bleRxCharacteristic = await service.getCharacteristic('19b10002-e8f2-537e-4f6c-d104768a1214');
 
-            // 2. Prepararnos para escuchar las respuestas del ESP32
             await bleRxCharacteristic.startNotifications();
             bleRxCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
                 const decodificador = new TextDecoder('utf-8');
                 const valor = decodificador.decode(event.target.value);
                 
                 if(valor === "FIN_SCAN") {
-                    // Terminó de mandar, armamos el select
                     const redes = redesEncontradas.split(",").filter(r => r !== "");
                     
                     selectSsid.innerHTML = '<option value="">Seleccioná tu red...</option>';
@@ -589,12 +584,10 @@
                     statusLabel.innerText = "✅ Redes encontradas";
                     panelRedes.style.display = "flex";
                 } else {
-                    // Sigue mandando pedacitos de la lista, los acumulamos
                     redesEncontradas += valor;
                 }
             });
 
-            // 3. Darle la orden de escanear al ESP32
             statusLabel.innerText = "Escaneando Wi-Fi (puede demorar 5 segundos)...";
             redesEncontradas = ""; 
             
@@ -630,7 +623,6 @@
             statusLabel.style.color = "var(--success)";
             statusLabel.innerText = "✅ ¡Guardado! El comedero se está reiniciando.";
             
-            // Limpiar y apagar Bluetooth
             document.getElementById('wifi-pass').value = "";
             document.getElementById('panel-wifi-redes').style.display = "none";
             if (bleDevice && bleDevice.gatt.connected) {
