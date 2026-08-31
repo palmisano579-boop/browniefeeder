@@ -9,13 +9,14 @@
     <style>
         /* --- PALETA DE COLORES (Tonos Marrones/Café) --- */
         :root {
-            --bg-color: #F7F3EB;       /* Crema muy suave de fondo */
-            --primary: #6D4C41;        /* Marrón café (botones y acentos) */
-            --primary-light: #8D6E63;  /* Marrón claro */
-            --text-dark: #3E2723;      /* Texto principal casi negro */
-            --text-gray: #795548;      /* Texto secundario */
-            --card-bg: #FFFFFF;        /* Fondo de tarjetas */
-            --success: #4CAF50;        /* Verde para conexión */
+            --bg-color: #F7F3EB;       
+            --primary: #6D4C41;        
+            --primary-light: #8D6E63;  
+            --text-dark: #3E2723;      
+            --text-gray: #795548;      
+            --card-bg: #FFFFFF;        
+            --success: #4CAF50;        
+            --danger: #ff7675;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent;}
@@ -27,7 +28,6 @@
             justify-content: center;
         }
 
-        /* Contenedor principal simulando pantalla de celular */
         .app-container {
             width: 100%;
             max-width: 450px;
@@ -39,7 +39,7 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.05);
         }
 
-        /* --- HEADER (Foto y Estado) --- */
+        /* --- HEADER --- */
         header {
             padding: 30px 20px 20px;
             background: var(--card-bg);
@@ -60,7 +60,6 @@
         .perfil h1 { font-size: 22px; font-weight: 900; color: var(--primary); }
         .perfil p { font-size: 13px; color: var(--text-gray); font-weight: 600; }
         
-        /* Indicador de conexión */
         .estado-conexion {
             display: flex; align-items: center; gap: 6px;
             background: #E8F5E9; padding: 6px 12px; border-radius: 20px;
@@ -68,10 +67,9 @@
         }
         .punto-verde { width: 10px; height: 10px; background: var(--success); border-radius: 50%; }
 
-        /* --- ZONA DE CONTENIDO (Pestañas) --- */
+        /* --- ZONA DE CONTENIDO --- */
         .contenido { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 90px; }
         
-        /* Ocultar pestañas no activas */
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -102,17 +100,15 @@
         }
         .btn-principal:active { transform: scale(0.96); }
 
-        /* --- ELEMENTOS GLOBALES (Tarjetas y Switches) --- */
+        /* --- ELEMENTOS GLOBALES --- */
         .tarjeta {
             background: var(--card-bg); border-radius: 20px; padding: 20px;
             box-shadow: 0 5px 15px rgba(109, 76, 65, 0.05); margin-bottom: 15px;
             display: flex; justify-content: space-between; align-items: center;
         }
         .tarjeta-columna { flex-direction: column; align-items: flex-start; gap: 15px;}
-        
         .titulo-seccion { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 15px; }
 
-        /* El botón Switch estilo iOS */
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
@@ -120,8 +116,7 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(22px); }
 
-        /* Inputs y Selects */
-        input[type="time"], select, input[type="number"] {
+        input[type="time"], select {
             padding: 10px; border-radius: 10px; border: 1px solid #EFEBE1;
             font-size: 16px; font-weight: 700; color: var(--primary); outline: none; background: #FDFBF7;
         }
@@ -141,12 +136,22 @@
         .nav-item i { font-size: 24px; font-style: normal;}
         .nav-item span { font-size: 11px; font-weight: 800; }
         
-        /* Lista de Historial */
         .lista-historial { list-style: none; }
         .lista-historial li { padding: 15px 0; border-bottom: 1px solid #EFEBE1; display: flex; justify-content: space-between; align-items: center;}
         .lista-historial li:last-child { border-bottom: none; }
         .historial-hora { font-weight: 800; color: var(--primary); }
         .historial-detalle { font-size: 13px; color: var(--text-gray); }
+
+        /* Animación de pulso para botón grabando */
+        @keyframes pulsoGrabar {
+            0% { box-shadow: 0 0 0 0 rgba(255, 118, 117, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 118, 117, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 118, 117, 0); }
+        }
+        .btn-grabando {
+            background-color: var(--danger) !important;
+            animation: pulsoGrabar 1.5s infinite;
+        }
 
     </style>
 </head>
@@ -157,7 +162,6 @@
     <!-- HEADER -->
     <header>
         <div class="perfil">
-            <!-- Podes cambiar esta URL por una foto de Brownie -->
             <img src="https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?q=80&w=200&auto=format&fit=crop" alt="Brownie">
             <div>
                 <h1>Brownie</h1>
@@ -172,21 +176,18 @@
     <!-- CONTENIDO CENTRAL -->
     <div class="contenido">
 
-        <!-- PESTAÑA 1: INICIO (HOME) -->
+        <!-- PESTAÑA 1: INICIO -->
         <div id="tab-home" class="tab-content active">
             <div class="tarjeta-estado">
                 <h3>Última comida servida</h3>
                 <h2>Hoy, 14:30 hs (Automático)</h2>
             </div>
-
             <h3 class="titulo-seccion">Servir ahora</h3>
-            
             <div class="selector-porcion">
                 <div class="opcion-porcion" onclick="seleccionarPorcion(this)">Snack</div>
                 <div class="opcion-porcion active" onclick="seleccionarPorcion(this)">1 Porción</div>
                 <div class="opcion-porcion" onclick="seleccionarPorcion(this)">2 Porciones</div>
             </div>
-
             <button class="btn-principal" onclick="alert('Simulación: Sirviendo comida a Brownie!')">
                 🍖 Dar de comer
             </button>
@@ -199,15 +200,9 @@
                     <h3 style="color: var(--primary); font-size: 18px;">Modo Automático</h3>
                     <p style="font-size: 13px; color: var(--text-gray);">Activar o pausar rutinas</p>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" checked>
-                    <span class="slider"></span>
-                </label>
+                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
             </div>
-
             <h3 class="titulo-seccion">Configurar Rutinas</h3>
-            
-            <!-- Desayuno -->
             <div class="tarjeta tarjeta-columna">
                 <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                     <h4 style="font-size: 16px; color: var(--primary);">☀️ Desayuno</h4>
@@ -222,8 +217,6 @@
                     </select>
                 </div>
             </div>
-
-            <!-- Cena -->
             <div class="tarjeta tarjeta-columna">
                 <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                     <h4 style="font-size: 16px; color: var(--primary);">🌙 Cena</h4>
@@ -238,10 +231,6 @@
                     </select>
                 </div>
             </div>
-            
-            <button style="width: 100%; padding: 15px; border-radius: 15px; border: 2px dashed var(--primary-light); background: transparent; color: var(--primary); font-weight: 800; cursor: pointer;">
-                + Agregar otro horario
-            </button>
         </div>
 
         <!-- PESTAÑA 3: HISTORIAL -->
@@ -263,43 +252,36 @@
                         </div>
                         <div>✅</div>
                     </li>
-                    <li>
-                        <div>
-                            <div class="historial-hora">Ayer, 21:15 hs</div>
-                            <div class="historial-detalle">Snack (Manual)</div>
-                        </div>
-                        <div>👤</div>
-                    </li>
-                    <li>
-                        <div>
-                            <div class="historial-hora">Ayer, 20:00 hs</div>
-                            <div class="historial-detalle">2 Porciones (Automático)</div>
-                        </div>
-                        <div>✅</div>
-                    </li>
                 </ul>
             </div>
         </div>
 
-        <!-- PESTAÑA 4: AJUSTES -->
+        <!-- PESTAÑA 4: AJUSTES (ACTUALIZADA) -->
         <div id="tab-settings" class="tab-content">
-            <h3 class="titulo-seccion">Calibración del Motor</h3>
+            <h3 class="titulo-seccion">Calibración Inteligente</h3>
+            
+            <!-- TARJETA NUEVA DE CALIBRACIÓN -->
             <div class="tarjeta tarjeta-columna">
-                <p style="font-size: 14px; color: var(--text-gray);">
-                    Ajustá cuántas vueltas debe dar el mecanismo para servir <strong>1 Porción estándar</strong>.
+                <p style="font-size: 14px; color: var(--text-gray); line-height: 1.4;">
+                    1. Presioná <strong>Iniciar</strong> (el motor empezará a servir despacio).<br>
+                    2. Cuando la ración sea ideal para Brownie, presioná <strong>Detener</strong>.<br>
+                    El sistema guardará automáticamente la configuración.
                 </p>
-                <div style="display: flex; align-items: center; gap: 15px; width: 100%;">
-                    <input type="number" value="5" min="1" max="20" style="width: 80px; text-align: center; font-size: 20px;">
-                    <span style="font-weight: 800; color: var(--primary);">Vueltas por porción</span>
-                </div>
-                <button style="width: 100%; background: var(--primary-light); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 10px;">
-                    Guardar calibración
+                
+                <button id="btn-calibrar" onclick="toggleCalibracion()" style="width: 100%; background: var(--primary-light); color: white; border: none; padding: 18px; border-radius: 15px; font-size: 16px; font-weight: 800; cursor: pointer; transition: all 0.3s ease;">
+                    ▶️ Iniciar Calibración
                 </button>
+                
+                <!-- Mensaje de éxito oculto por defecto -->
+                <div id="mensaje-calibracion" style="display: none; width: 100%; text-align: center; color: var(--success); font-weight: 800; font-size: 14px; margin-top: 5px;">
+                    ✅ ¡Calibración guardada exitosamente!
+                </div>
             </div>
             
             <div class="tarjeta tarjeta-columna" style="margin-top: 20px;">
-                <h4 style="font-size: 16px; color: #d63031;">Zona Peligrosa</h4>
-                <button style="width: 100%; background: #ff7675; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer;">
+                <h4 style="font-size: 16px; color: var(--danger);">Zona Peligrosa</h4>
+                <p style="font-size: 12px; color: var(--text-gray);">Fuerza el reinicio del comedero si pierde conexión WiFi.</p>
+                <button style="width: 100%; background: var(--danger); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer;">
                     🔄 Reiniciar ESP32
                 </button>
             </div>
@@ -326,31 +308,59 @@
 </div>
 
 <script>
-    // Función para cambiar de pestañas en el menú inferior
+    // --- LÓGICA DE PESTAÑAS ---
     function cambiarPestana(tabId, elemento) {
-        // Ocultar todas las pestañas
         document.querySelectorAll('.tab-content').forEach(tab => {
             tab.classList.remove('active');
         });
-        // Despintar todos los botones del menú
         document.querySelectorAll('.nav-item').forEach(nav => {
             nav.classList.remove('active');
         });
-        
-        // Activar la pestaña y el botón seleccionado
         document.getElementById('tab-' + tabId).classList.add('active');
         elemento.classList.add('active');
     }
 
-    // Función visual para los botones de porción (Snack / 1 Porcion / 2 Porciones)
+    // --- LÓGICA SELECTOR DE PORCIÓN (HOME) ---
     function seleccionarPorcion(elemento) {
-        // Deseleccionar todos
         let opciones = elemento.parentElement.children;
         for(let i=0; i<opciones.length; i++) {
             opciones[i].classList.remove('active');
         }
-        // Seleccionar el tocado
         elemento.classList.add('active');
+    }
+
+    // --- LÓGICA NUEVA DE CALIBRACIÓN ---
+    let estaCalibrando = false;
+
+    function toggleCalibracion() {
+        const btn = document.getElementById("btn-calibrar");
+        const msj = document.getElementById("mensaje-calibracion");
+
+        if (!estaCalibrando) {
+            // Empieza a calibrar
+            estaCalibrando = true;
+            btn.innerHTML = "⏹️ Detener y Guardar";
+            btn.classList.add("btn-grabando"); // Le pone el efecto de "latido" rojo
+            msj.style.display = "none";
+            
+            // ACA EN EL FUTURO IRÁ EL CÓDIGO DE FIREBASE QUE LE AVISA AL ESP32 QUE ARRANQUE
+            console.log("Firebase: estado/calibrando -> true");
+
+        } else {
+            // Detiene y guarda
+            estaCalibrando = false;
+            btn.innerHTML = "▶️ Iniciar Calibración";
+            btn.classList.remove("btn-grabando");
+            msj.style.display = "block";
+            
+            // ACA EN EL FUTURO IRÁ EL CÓDIGO DE FIREBASE QUE LE AVISA AL ESP32 QUE FRENE
+            console.log("Firebase: estado/calibrando -> false");
+
+            // Ocultar el mensaje de éxito después de 4 segundos para que quede prolijo
+            setTimeout(() => {
+                msj.style.display = "none";
+            }, 4000);
+        }
     }
 </script>
 
