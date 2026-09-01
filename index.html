@@ -575,38 +575,54 @@
         const badge = document.getElementById("badge-conexion");
         const punto = document.getElementById("punto-conexion");
         const texto = document.getElementById("texto-conexion");
+        const btnServir = document.getElementById("btn-servir"); // Seleccionamos el botón
         
         if (enLinea === true) {
             badge.style.background = "#E8F5E9";
             badge.style.color = "var(--success)";
             punto.style.background = "var(--success)";
             texto.innerText = "En línea";
+            
+            // Habilitamos el botón
+            btnServir.disabled = false;
+            btnServir.style.opacity = "1";
+            btnServir.style.cursor = "pointer";
         } else {
             // Si es false o null (no existe el dato aún)
             badge.style.background = "#FFEBEE";
             badge.style.color = "var(--danger)";
             punto.style.background = "var(--danger)";
             texto.innerText = "Desconectado";
+            
+            // Bloqueamos el botón y lo hacemos semitransparente
+            btnServir.disabled = true;
+            btnServir.style.opacity = "0.5";
+            btnServir.style.cursor = "not-allowed";
         }
     });
 
     // --- NUEVO: SISTEMA DE LATIDOS (VIGILANTE DE CONEXIÓN) ---
-    setInterval(() => {
+    function chequearConexion() {
         get(ref(db, 'comedero/estado/ultimo_latido')).then((snapshot) => {
             if (snapshot.exists()) {
                 const ultimoLatido = snapshot.val(); // Segundos guardados por el ESP32
-                const ahora = Math.floor(Date.now() / 1000); // Segundos actuales en tu celular
+                const ahora = Math.floor(Date.now() / 1000); // Segundos actuales
                 
-                // Si pasaron más de 125 segundos sin recibir latidos del ESP32
+                // Si pasaron más de 125 segundos sin recibir latidos
                 if (ahora - ultimoLatido > 125) {
-                    // Forzamos el estado a Desconectado
                     set(ref(db, 'comedero/estado/en_linea'), false);
                 }
             }
         }).catch((error) => {
             console.error("Error al revisar el latido: ", error);
         });
-    }, 60000);
+    }
+
+    // 1. Chequea de forma inmediata apenas abrís la app
+    chequearConexion();
+    
+    // 2. Luego se queda chequeando cada 1 minuto por si se corta mientras la usás
+    setInterval(chequearConexion, 60000);
 
     window.servirComida = function() {
         const btnServir = document.getElementById("btn-servir");
