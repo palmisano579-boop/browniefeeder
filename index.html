@@ -590,6 +590,24 @@
         }
     });
 
+    // --- NUEVO: SISTEMA DE LATIDOS (VIGILANTE DE CONEXIÓN) ---
+    setInterval(() => {
+        get(ref(db, 'comedero/estado/ultimo_latido')).then((snapshot) => {
+            if (snapshot.exists()) {
+                const ultimoLatido = snapshot.val(); // Segundos guardados por el ESP32
+                const ahora = Math.floor(Date.now() / 1000); // Segundos actuales en tu celular
+                
+                // Si pasaron más de 125 segundos sin recibir latidos del ESP32
+                if (ahora - ultimoLatido > 125) {
+                    // Forzamos el estado a Desconectado
+                    set(ref(db, 'comedero/estado/en_linea'), false);
+                }
+            }
+        }).catch((error) => {
+            console.error("Error al revisar el latido: ", error);
+        });
+    }, 60000);
+
     window.servirComida = function() {
         const btnServir = document.getElementById("btn-servir");
         
